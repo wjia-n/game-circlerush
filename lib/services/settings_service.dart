@@ -52,7 +52,7 @@ class RushSettings extends ChangeNotifier {
   String shipStyleId = 'arrow';
   Difficulty difficulty = Difficulty.drifter;
   RushMode mode = RushMode.endless;
-  bool isPro = false;
+  bool isPro = true; // everything unlocked — no Pro version
   int gamesPlayed = 0;
   int wins = 0;
   double bestEndless = 0; // seconds
@@ -153,7 +153,7 @@ class RushSettings extends ChangeNotifier {
     difficulty =
         Difficulty.values[(p.getInt(_kDifficulty) ?? 0).clamp(0, 3)];
     mode = RushMode.values[(p.getInt(_kMode) ?? 0).clamp(0, 2)];
-    isPro = p.getBool(_kIsPro) ?? false;
+    isPro = true; // everything unlocked
     gamesPlayed = p.getInt(_kGames) ?? 0;
     wins = p.getInt(_kWins) ?? 0;
     // Migrate the old v1 single "best" key into best_endless if empty.

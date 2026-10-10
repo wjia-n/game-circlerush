@@ -32,26 +32,10 @@ class _ProScreenState extends State<ProScreen> {
   void initState() {
     super.initState();
     widget.store.init();
-    widget.store.proPurchased.addListener(_onPro);
     widget.store.lastThanks.addListener(_onThanks);
   }
 
-  void _onPro() {
-    if (widget.store.proPurchased.value && mounted) {
-      widget.settings.setPro(true);
-      widget.audio.win();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PRO unlocked — enjoy everything!',
-              style: Orrery.body(15, theme: _t)),
-          backgroundColor: _t.panel,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      widget.store.proPurchased.value = false;
-    }
-  }
-
+  
   void _onThanks() {
     final msg = widget.store.lastThanks.value;
     if (msg == null || !mounted) return;
@@ -68,7 +52,6 @@ class _ProScreenState extends State<ProScreen> {
 
   @override
   void dispose() {
-    widget.store.proPurchased.removeListener(_onPro);
     widget.store.lastThanks.removeListener(_onThanks);
     super.dispose();
   }
@@ -108,13 +91,7 @@ class _ProScreenState extends State<ProScreen> {
                   const SizedBox(height: 14),
                   _ComparisonCard(theme: t, isPro: s.isPro),
                   const SizedBox(height: 14),
-                  _BuyCard(
-                    theme: t,
-                    settings: s,
-                    store: store,
-                    audio: widget.audio,
-                  ),
-                  const SizedBox(height: 14),
+                                    const SizedBox(height: 14),
                   _TipsCard(
                     theme: t,
                     store: store,
@@ -126,211 +103,6 @@ class _ProScreenState extends State<ProScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ComparisonCard extends StatelessWidget {
-  final OrreryThemeDef theme;
-  final bool isPro;
-  const _ComparisonCard({required this.theme, required this.isPro});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = theme;
-    final rows = [
-      ['Difficulty tiers', '2 of 4', 'All 4'],
-      ['Orrery themes', '4', '13 + custom creator'],
-      ['Orb styles', '4', '10 + custom orb'],
-      ['Ship styles', '8', 'All 12'],
-      ['Custom theme creator', '—', '✓'],
-      ['Fierce tiers: Cometchaser & Nova', '—', '✓'],
-    ];
-    return BrassPanel(
-      theme: t,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.workspace_premium,
-                  color: t.brassLight, size: 22),
-              const SizedBox(width: 8),
-              Text('FREE vs PRO',
-                  style: Orrery.label(14, theme: t)),
-              const Spacer(),
-              if (isPro)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: t.brass,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text('YOU ARE PRO',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF241309))),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.black.withValues(alpha: 0.3),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  child: Row(
-                    children: [
-                      const Expanded(child: SizedBox()),
-                      SizedBox(
-                          width: 74,
-                          child: Text('FREE',
-                              textAlign: TextAlign.center,
-                              style: Orrery.label(11, theme: t))),
-                      SizedBox(
-                          width: 74,
-                          child: Text('PRO',
-                              textAlign: TextAlign.center,
-                              style: Orrery.label(11, theme: t))),
-                    ],
-                  ),
-                ),
-                for (int i = 0; i < rows.length; i++)
-                  Container(
-                    color: i.isOdd
-                        ? Colors.white.withValues(alpha: 0.03)
-                        : null,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: Text(rows[i][0],
-                                style: Orrery.body(13,
-                                    theme: t))),
-                        SizedBox(
-                            width: 74,
-                            child: Text(rows[i][1],
-                                textAlign: TextAlign.center,
-                                style: Orrery.body(13,
-                                    theme: t,
-                                    color: t.muted))),
-                        SizedBox(
-                            width: 74,
-                            child: Text(rows[i][2],
-                                textAlign: TextAlign.center,
-                                style: Orrery.body(13, theme: t)
-                                    .copyWith(
-                                        fontWeight:
-                                            FontWeight.w800,
-                                        color:
-                                            t.brassLight))),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BuyCard extends StatelessWidget {
-  final OrreryThemeDef theme;
-  final RushSettings settings;
-  final StoreService store;
-  final RushAudio audio;
-  const _BuyCard(
-      {required this.theme,
-      required this.settings,
-      required this.store,
-      required this.audio});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = theme;
-    return BrassPanel(
-      theme: t,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('UNLOCK PRO FOREVER',
-              style: Orrery.label(14, theme: t)),
-          const SizedBox(height: 8),
-          Text(
-            'One payment, yours forever — on every device with your Play account.',
-            style: Orrery.body(13, theme: t, color: t.muted),
-          ),
-          const SizedBox(height: 12),
-          ListenableBuilder(
-            listenable: store.purchaseInProgress,
-            builder: (_, _) => ListenableBuilder(
-              listenable: store.purchaseError,
-              builder: (_, _) {
-                if (settings.isPro) {
-                  return BrassButton(
-                    theme: t,
-                    text: '✓  PRO ACTIVE',
-                    onTap: null,
-                  );
-                }
-                final p = store.proProduct;
-                if (!store.storeReady || p == null) {
-                  return _StoreNote(
-                    theme: t,
-                    text: store.error ??
-                        'Pro unlock appears here once the game is live on the Play Store.',
-                  );
-                }
-                return Column(
-                  children: [
-                    BrassButton(
-                      theme: t,
-                      text: store.purchaseInProgress.value
-                          ? 'WORKING…'
-                          : 'UNLOCK PRO — ${p.price}',
-                      onTap: store.purchaseInProgress.value
-                          ? null
-                          : () {
-                              audio.click();
-                              store.buyPro();
-                            },
-                    ),
-                    if (store.purchaseError.value != null)
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(top: 8),
-                        child: Text(
-                            store.purchaseError.value!,
-                            style: Orrery.body(13,
-                                theme: t,
-                                color: Colors.redAccent)),
-                      ),
-                    const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: () {
-                        audio.click();
-                        store.restore();
-                      },
-                      child: Text('RESTORE PURCHASES',
-                          style: Orrery.label(12, theme: t)),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
       ),
     );
   }
