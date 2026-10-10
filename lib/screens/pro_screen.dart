@@ -89,9 +89,6 @@ class _ProScreenState extends State<ProScreen> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  _ComparisonCard(theme: t, isPro: s.isPro),
-                  const SizedBox(height: 14),
-                                    const SizedBox(height: 14),
                   _TipsCard(
                     theme: t,
                     store: store,
