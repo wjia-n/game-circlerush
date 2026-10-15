@@ -20,6 +20,9 @@ import 'package:audioplayers/audioplayers.dart';
 ///   or dying.
 /// - Every public method catches player errors; audio can never crash the app.
 class RushAudio {
+  /// Per-game pitch character (circlerush): 1.12x. Makes SFX unique.
+  static const double _pitchMul = 1.120;
+
   static const int _rate = 22050;
   final AudioPlayer _sfx = AudioPlayer();
   final AudioPlayer _music = AudioPlayer();
@@ -106,6 +109,8 @@ class RushAudio {
 
   List<double> _tone(double freq, double secs,
       {double freqEnd = 0, double attack = 0.02, double harmonics = 0.25}) {
+    freq *= _pitchMul;
+    freqEnd *= _pitchMul;
     final n = (_rate * secs).round();
     final out = List<double>.filled(n, 0);
     for (int i = 0; i < n; i++) {
@@ -164,64 +169,51 @@ class RushAudio {
       _cache.putIfAbsent(key, () => _wav(build()));
 
   Uint8List _menuBytes() => _clip('music_menu', () {
-        // Warm Dm – Bb – F – C waltz pads, 16s loop.
+        // F waltz 5 – 0 – 3 – 4, 12s loop. Unique to circlerush.
         final seq = [
-          [146.83, 220.0, 293.66], // Dm
-          [116.54, 174.61, 233.08], // Bb
-          [174.61, 220.0, 261.63], // F
-          [130.81, 196.0, 261.63], // C
+          [293.67, 349.23, 440.00],
+          [174.62, 220.00, 261.63],
+          [233.08, 293.67, 349.23],
+          [261.63, 329.63, 392.00]
         ];
         final out = <double>[];
         for (final chord in seq) {
-          out.addAll(_padChord(chord, 4.0));
+          // Waltz: bass on 1, chords on 2 and 3
+          final bass = _tone(chord[0] / 2, 0.8, harmonics: 0.3);
+          final ch1 = _padChord([chord[1], chord[2]], 0.7);
+          final ch2 = _padChord([chord[1], chord[2]], 0.7);
+          out.addAll(bass);
+          final gap1 = List<double>.filled((_rate * 0.2).round(), 0);
+          out.addAll(gap1);
+          out.addAll(ch1);
+          final gap2 = List<double>.filled((_rate * 0.2).round(), 0);
+          out.addAll(gap2);
+          out.addAll(ch2);
+          final gap3 = List<double>.filled((_rate * 0.2).round(), 0);
+          out.addAll(gap3);
         }
         return out;
       });
 
+
   Uint8List _gameBytes() => _clip('music_game', () {
-        // Driving 12s loop: low bass pulse + minor-pentatonic ticks,
-        // like a clockwork engine spinning up.
-        final n = (_rate * 12).round();
-        final out = List<double>.filled(n, 0);
-        // Bass pulse on each beat (4 beats per 2s bar).
-        final beat = (_rate * 0.5).round();
-        final bassTone = _tone(98.0, 0.32, harmonics: 0.4);
-        for (int b = 0; b * beat < n; b++) {
-          final start = b * beat;
-          final amp = (b % 4 == 0) ? 0.55 : 0.38;
-          for (int i = 0; i < bassTone.length && start + i < n; i++) {
-            out[start + i] += bassTone[i] * amp;
-          }
+        // F arpeggiated 5 – 0 – 3 – 4, 16s loop. Unique to circlerush.
+        final notes = [293.67, 349.23, 440.00, 349.23, 174.62, 220.00, 261.63, 220.00, 233.08, 293.67, 349.23, 293.67, 261.63, 329.63, 392.00, 329.63];
+        final out = <double>[];
+        final noteLen = 16.0 / notes.length;
+        for (final n in notes) {
+          out.addAll(_tone(n, noteLen * 0.9, harmonics: 0.3));
+          final gap = List<double>.filled((_rate * noteLen * 0.1).round(), 0);
+          out.addAll(gap);
         }
-        // Tick arps on the off-beats.
-        final notes = [
-          392.0,
-          466.16,
-          523.25,
-          587.33,
-          523.25,
-          466.16,
-          392.0,
-          349.23,
-          392.0,
-          466.16,
-          587.33,
-          659.25
-        ];
-        for (int k = 0; k < notes.length; k++) {
-          final start = ((n * (k + 0.5)) / notes.length).round();
-          final tick = _tone(notes[k], 0.18, harmonics: 0.5);
-          for (int i = 0; i < tick.length && start + i < n; i++) {
-            out[start + i] += tick[i] * 0.28;
-          }
-        }
-        // Swell drone underneath.
-        final drone = _padChord([98.0, 146.83], 12.0);
-        for (int i = 0; i < n; i++) {
-          out[i] += drone[i] * 0.22;
+        // Soft pad underneath
+        final pad = _padChord([293.67, 349.23, 440.00], 16.0);
+        for (int i = 0; i < out.length && i < pad.length; i++) {
+          out[i] += pad[i] * 0.3;
         }
         return out;
       });
+
 
   // ------------------------------------------------------------------ SFX
   Future<void> _play(Uint8List bytes) async {
