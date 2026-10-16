@@ -3,6 +3,7 @@ import '../services/audio_service.dart';
 import '../services/settings_service.dart';
 import '../theme/orrery_themes.dart';
 import '../theme/orrery_widgets.dart';
+import '../transfer/transfer_ui.dart';
 
 /// Settings: renameable pilot profile, music/SFX toggles, volume,
 /// best-score reset, about.
@@ -71,6 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+              TransferSaveTile(gameSlug: 'circlerush'),
                     Row(
                       children: [
                         DialButton(
